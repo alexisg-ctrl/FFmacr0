@@ -3,19 +3,21 @@ package com.ffmacro;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.TextView;
 
 public class AutoTapService extends AccessibilityService {
 
+    // Tus coordenadas originales
     private static final float ABRIR_X = 1120f;
     private static final float ABRIR_Y = 541f;
 
@@ -32,116 +34,101 @@ public class AutoTapService extends AccessibilityService {
     private final Handler handler =
             new Handler(Looper.getMainLooper());
 
-    private long lastMacroTime = 0;
-    private boolean macroRunning = false;
-
     private WindowManager wm;
-    private View overlayView;
-    private WindowManager.LayoutParams overlayParams;
+    private TextView boton;
+    private WindowManager.LayoutParams params;
+
+    private boolean ejecutando = false;
+    private long ultimoInicio = 0;
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        showOverlayButton();
+        crearBoton();
     }
 
-    private void showOverlayButton() {
+    private GradientDrawable fondo(int color) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setColor(color);
+        drawable.setStroke(4, Color.WHITE);
+        return drawable;
+    }
+
+    private void actualizarColor(int color, String texto) {
+        if (boton == null) return;
+
+        boton.setBackground(fondo(color));
+        boton.setText(texto);
+    }
+
+    private void crearBoton() {
+        if (boton != null) return;
+
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        if (overlayView != null) return;
+        boton = new TextView(this);
+        boton.setText("GO");
+        boton.setTextColor(Color.WHITE);
+        boton.setTextSize(18);
+        boton.setGravity(Gravity.CENTER);
+        boton.setElevation(12);
+        boton.setBackground(fondo(Color.rgb(220, 30, 30)));
+        boton.setContentDescription("Ejecutar las tres acciones");
 
-        overlayView = new View(this);
-        overlayView.setBackgroundColor(0xCCFFD700);
-
-        overlayParams = new WindowManager.LayoutParams(
-                80, 80,
+        params = new WindowManager.LayoutParams(
+                90,
+                90,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
         );
 
-        overlayParams.gravity = Gravity.TOP | Gravity.END;
-        overlayParams.x = 10;
-        overlayParams.y = 300;
+        params.gravity = Gravity.TOP | Gravity.END;
+        params.x = 25;
+        params.y = 350;
 
-        overlayView.setOnClickListener(v -> {
-            long now = System.currentTimeMillis();
+        boton.setOnClickListener(v -> {
+            long ahora = System.currentTimeMillis();
 
-            if (macroRunning ||
-                    now - lastMacroTime < COOLDOWN_MS) {
+            if (ejecutando ||
+                    ahora - ultimoInicio < COOLDOWN_MS) {
                 return;
             }
 
-            lastMacroTime = now;
-            runMacro();
+            ultimoInicio = ahora;
+            ejecutarMacro();
         });
 
-        overlayView.setOnTouchListener(new View.OnTouchListener() {
-            private int lastX, lastY, initX, initY;
-            private boolean isDrag;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent e) {
-                switch (e.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        lastX = (int) e.getRawX();
-                        lastY = (int) e.getRawY();
-                        initX = overlayParams.x;
-                        initY = overlayParams.y;
-                        isDrag = false;
-                        return false;
-
-                    case MotionEvent.ACTION_MOVE:
-                        int dx = (int) e.getRawX() - lastX;
-                        int dy = (int) e.getRawY() - lastY;
-
-                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                            isDrag = true;
-                        }
-
-                        if (isDrag) {
-                            overlayParams.x = initX - dx;
-                            overlayParams.y = initY + dy;
-                            wm.updateViewLayout(
-                                    overlayView, overlayParams);
-                        }
-                        return isDrag;
-
-                    default:
-                        return false;
-                }
-            }
-        });
-
-        wm.addView(overlayView, overlayParams);
+        wm.addView(boton, params);
     }
 
-    private void runMacro() {
-        if (macroRunning) return;
-        macroRunning = true;
+    private void ejecutarMacro() {
+        if (ejecutando) return;
 
-        // 1. Abrir la tienda.
-        tapAndWait(ABRIR_X, ABRIR_Y, success -> {
-            if (!success) {
-                finishMacro();
+        ejecutando = true;
+        actualizarColor(Color.rgb(30, 170, 70), "...");
+
+        // Acción 1: abrir
+        tocar(ABRIR_X, ABRIR_Y, ok1 -> {
+            if (!ok1) {
+                terminar();
                 return;
             }
 
             handler.postDelayed(() -> {
-                // 2. Seleccionar la primera casilla.
-                tapAndWait(M7_X, M7_Y, secondSuccess -> {
-                    if (!secondSuccess) {
-                        finishMacro();
+                // Acción 2: seleccionar
+                tocar(M7_X, M7_Y, ok2 -> {
+                    if (!ok2) {
+                        terminar();
                         return;
                     }
 
                     handler.postDelayed(() -> {
-                        // 3. Confirmar la compra.
-                        tapAndWait(
-                                OBTENER_X,
-                                OBTENER_Y,
-                                thirdSuccess -> finishMacro()
-                        );
+                        // Acción 3: obtener / confirmar
+                        tocar(OBTENER_X, OBTENER_Y, ok3 -> {
+                            terminar();
+                        });
                     }, ESPERA_CONFIRMAR_MS);
 
                 });
@@ -149,89 +136,69 @@ public class AutoTapService extends AccessibilityService {
         });
     }
 
-    private interface GestureResult {
-        void onResult(boolean success);
+    private interface Resultado {
+        void completar(boolean correcto);
     }
 
-    private void tapAndWait(
-            float x, float y, GestureResult callback) {
+    private void tocar(float x, float y, Resultado resultado) {
+        Path ruta = new Path();
+        ruta.moveTo(x, y);
 
-        Path path = new Path();
-        path.moveTo(x, y);
-
-        GestureDescription gesture =
+        GestureDescription gesto =
                 new GestureDescription.Builder()
                         .addStroke(
                                 new GestureDescription.StrokeDescription(
-                                        path, 0, 60))
+                                        ruta, 0, 60
+                                )
+                        )
                         .build();
 
-        boolean dispatched = dispatchGesture(
-                gesture,
+        boolean enviado = dispatchGesture(
+                gesto,
                 new GestureResultCallback() {
                     @Override
                     public void onCompleted(GestureDescription g) {
-                        callback.onResult(true);
+                        resultado.completar(true);
                     }
 
                     @Override
                     public void onCancelled(GestureDescription g) {
-                        callback.onResult(false);
+                        resultado.completar(false);
                     }
                 },
                 null
         );
 
-        if (!dispatched) {
-            callback.onResult(false);
+        if (!enviado) {
+            resultado.completar(false);
         }
     }
 
-    private void finishMacro() {
-        macroRunning = false;
-    }
-
-    @Override
-    protected boolean onKeyEvent(KeyEvent event) {
-        if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP
-                && event.getAction() == KeyEvent.ACTION_DOWN
-                && event.getRepeatCount() == 0) {
-
-            long now = System.currentTimeMillis();
-
-            if (!macroRunning
-                    && now - lastMacroTime >= COOLDOWN_MS) {
-                lastMacroTime = now;
-                runMacro();
-            }
-
-            return true;
-        }
-
-        return super.onKeyEvent(event);
+    private void terminar() {
+        ejecutando = false;
+        actualizarColor(Color.rgb(220, 30, 30), "GO");
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Sin eventos adicionales.
+        // No necesitamos procesar eventos para este botón.
     }
 
     @Override
     public void onInterrupt() {
-        finishMacro();
+        terminar();
     }
 
     @Override
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
 
-        if (overlayView != null && wm != null) {
+        if (boton != null && wm != null) {
             try {
-                wm.removeView(overlayView);
+                wm.removeView(boton);
             } catch (Exception ignored) {
-                // La vista ya podría haberse retirado.
             }
-            overlayView = null;
+            boton = null;
         }
 
         super.onDestroy();
