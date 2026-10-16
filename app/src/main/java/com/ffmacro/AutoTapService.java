@@ -30,18 +30,23 @@ public class AutoTapService extends AccessibilityService {
     }
 
     private void runMacro() {
+        // TAP 1 — ABRIR (inmediato)
         tap(ABRIR_X, ABRIR_Y);
-        handler.postDelayed(() -> tap(M7_X, M7_Y), 200);
-        handler.postDelayed(() -> tap(OBTENER_X, OBTENER_Y), 420);
+
+        // TAP 2 — M7 (80ms después)
+        handler.postDelayed(() -> tap(M7_X, M7_Y), 80);
+
+        // TAP 3 — OBTENER (160ms después)
+        handler.postDelayed(() -> tap(OBTENER_X, OBTENER_Y), 160);
     }
 
     private void tap(float x, float y) {
         Path path = new Path();
         path.moveTo(x, y);
-        GestureDescription g = new GestureDescription.Builder()
-            .addStroke(new GestureDescription.StrokeDescription(path, 0, 60))
+        GestureDescription gesture = new GestureDescription.Builder()
+            .addStroke(new GestureDescription.StrokeDescription(path, 0, 50))
             .build();
-        dispatchGesture(g, null, null);
+        dispatchGesture(gesture, null, null);
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {}
