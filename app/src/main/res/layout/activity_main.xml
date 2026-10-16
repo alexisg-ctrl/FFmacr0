@@ -10,6 +10,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Header -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -23,13 +24,14 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="AUTO WEAPON GRABBER"
+            android:text="AUTO SHOP BUYER"
             android:textColor="#FF6B00"
             android:textSize="13sp"
             android:gravity="center"
             android:letterSpacing="0.3"
             android:layout_marginBottom="24dp"/>
 
+        <!-- Status -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,6 +58,56 @@
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
+        <!-- Secuencia 3 pasos -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_bg"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SECUENCIA (3 TAPS)"
+                android:textColor="#888888"
+                android:textSize="11sp"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="① Toca botón COMPRAR del HUD"
+                android:textColor="#00E5FF"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="② Selecciona Caja de Información"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="6dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="③ Confirma con COMPRAR del modal"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="6dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚡ ~600ms entre tap 1→2 · 350ms entre tap 2→3"
+                android:textColor="#FF6B00"
+                android:textSize="12sp"
+                android:layout_marginTop="10dp"/>
+        </LinearLayout>
+
+        <!-- Trigger -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,61 +126,22 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🔊 Botón Volumen +"
+                android:text="🛒 Botón flotante «FF BUY»"
                 android:textColor="#00E5FF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/card_bg"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SECUENCIA"
-                android:textColor="#888888"
-                android:textSize="11sp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="① ABRIR item del piso"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="② Seleccionar M7"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="③ Confirmar OBTENER"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚡ 80ms entre cada tap"
-                android:textColor="#FF6B00"
+                android:text="Arrastra para mover · Toca para ejecutar"
+                android:textColor="#666666"
                 android:textSize="12sp"
-                android:layout_marginTop="8dp"/>
+                android:layout_marginTop="4dp"/>
         </LinearLayout>
 
+        <!-- Anti-cheat -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -148,14 +161,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🛡 Timing aleatorio activado"
+                android:text="🛡 Offset aleatorio ±3px por tap"
                 android:textColor="#00FF88"
                 android:textSize="14sp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🛡 Offset de coords ±3px"
+                android:text="🛡 Cooldown 1200ms post-secuencia"
                 android:textColor="#00FF88"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp"/>
@@ -163,9 +176,42 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🛡 Cooldown 800ms"
+                android:text="🛡 Duración tap 80ms (humano)"
                 android:textColor="#00FF88"
                 android:textSize="14sp"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Ajuste de coords -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_bg"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CALIBRACIÓN"
+                android:textColor="#888888"
+                android:textSize="11sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Si falla, edita AutoTapService.java:"
+                android:textColor="#BBBBBB"
+                android:textSize="12sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="T1_X/Y → botón COMPRAR HUD\nT2_X/Y → casilla Caja Info\nT3_X/Y → botón COMPRAR modal"
+                android:textColor="#FF9800"
+                android:textSize="12sp"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -183,7 +229,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="v1.0 • by chief"
+            android:text="v2.0 • by chief"
             android:textColor="#444444"
             android:textSize="11sp"
             android:gravity="center"
