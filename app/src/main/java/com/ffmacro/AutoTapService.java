@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -24,10 +25,8 @@ public class AutoTapService extends AccessibilityService {
     private static final float OBTENER_X = 1467f;
     private static final float OBTENER_Y = 892f;
 
-    // Pausas entre acciones
     private static final long ESPERA_SELECCION_MS = 300;
     private static final long ESPERA_CONFIRMAR_MS = 250;
-
     private static final long COOLDOWN_MS = 800;
 
     private final Handler handler =
@@ -55,8 +54,7 @@ public class AutoTapService extends AccessibilityService {
         overlayView.setBackgroundColor(0xCCFFD700);
 
         overlayParams = new WindowManager.LayoutParams(
-                80,
-                80,
+                80, 80,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
@@ -120,10 +118,9 @@ public class AutoTapService extends AccessibilityService {
 
     private void runMacro() {
         if (macroRunning) return;
-
         macroRunning = true;
 
-        // 1. Abrir tienda
+        // 1. Abrir la tienda.
         tapAndWait(ABRIR_X, ABRIR_Y, success -> {
             if (!success) {
                 finishMacro();
@@ -131,8 +128,7 @@ public class AutoTapService extends AccessibilityService {
             }
 
             handler.postDelayed(() -> {
-
-                // 2. Seleccionar primera casilla
+                // 2. Seleccionar la primera casilla.
                 tapAndWait(M7_X, M7_Y, secondSuccess -> {
                     if (!secondSuccess) {
                         finishMacro();
@@ -140,18 +136,15 @@ public class AutoTapService extends AccessibilityService {
                     }
 
                     handler.postDelayed(() -> {
-
-                        // 3. Confirmar compra
+                        // 3. Confirmar la compra.
                         tapAndWait(
                                 OBTENER_X,
                                 OBTENER_Y,
                                 thirdSuccess -> finishMacro()
                         );
-
                     }, ESPERA_CONFIRMAR_MS);
 
                 });
-
             }, ESPERA_SELECCION_MS);
         });
     }
@@ -161,9 +154,7 @@ public class AutoTapService extends AccessibilityService {
     }
 
     private void tapAndWait(
-            float x,
-            float y,
-            GestureResult callback) {
+            float x, float y, GestureResult callback) {
 
         Path path = new Path();
         path.moveTo(x, y);
@@ -201,6 +192,26 @@ public class AutoTapService extends AccessibilityService {
     }
 
     @Override
+    protected boolean onKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP
+                && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getRepeatCount() == 0) {
+
+            long now = System.currentTimeMillis();
+
+            if (!macroRunning
+                    && now - lastMacroTime >= COOLDOWN_MS) {
+                lastMacroTime = now;
+                runMacro();
+            }
+
+            return true;
+        }
+
+        return super.onKeyEvent(event);
+    }
+
+    @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         // Sin eventos adicionales.
     }
@@ -218,9 +229,8 @@ public class AutoTapService extends AccessibilityService {
             try {
                 wm.removeView(overlayView);
             } catch (Exception ignored) {
-                // La vista podría haberse retirado anteriormente.
+                // La vista ya podría haberse retirado.
             }
-
             overlayView = null;
         }
 
