@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
 }
 android {
+    namespace 'com.ffmacro'
     compileSdk 34
     defaultConfig {
         applicationId "com.ffmacro"
