@@ -9,39 +9,16 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
 
 public class AutoTapService extends AccessibilityService {
 
-    private static final float ABRIR_X = 1120f;
-    private static final float ABRIR_Y = 541f;
-
-    private static final float M7_X = 402f;
-    private static final float M7_Y = 399f;
-
-    private static final float OBTENER_X = 1467f;
-    private static final float OBTENER_Y = 892f;
-
-    private static final long ESPERA_SELECCION_MS = 500;
-    private static final long ESPERA_CONFIRMAR_MS = 400;
-    private static final long TIMEOUT_GESTO_MS = 1500;
-    private static final long COOLDOWN_MS = 1000;
-
-    private final Handler handler =
-            new Handler(Looper.getMainLooper());
-
     private WindowManager wm;
     private TextView boton;
-    private WindowManager.LayoutParams params;
-
-    private boolean ejecutando = false;
-    private long ultimoInicio = 0;
-
-    private final int ROJO = Color.rgb(220, 30, 30);
-    private final int VERDE = Color.rgb(30, 170, 70);
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean probando = false;
 
     @Override
     protected void onServiceConnected() {
@@ -49,158 +26,90 @@ public class AutoTapService extends AccessibilityService {
         crearBoton();
     }
 
-    private GradientDrawable fondo(int color) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setShape(GradientDrawable.OVAL);
-        drawable.setColor(color);
-        drawable.setStroke(4, Color.WHITE);
-        return drawable;
-    }
-
-    private void actualizarBoton(int color, String texto) {
-        if (boton != null) {
-            boton.setBackground(fondo(color));
-            boton.setText(texto);
-        }
-    }
-
     private void crearBoton() {
         if (boton != null) return;
 
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-
         boton = new TextView(this);
-        boton.setText("GO");
+        boton.setText("PROBAR");
         boton.setTextColor(Color.WHITE);
-        boton.setTextSize(18);
+        boton.setTextSize(14);
         boton.setGravity(Gravity.CENTER);
-        boton.setBackground(fondo(ROJO));
+        boton.setBackground(fondo(Color.RED));
 
-        params = new WindowManager.LayoutParams(
-                90,
-                90,
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
+        WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+            110, 90,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
         );
+        p.gravity = Gravity.TOP | Gravity.END;
+        p.x = 20;
+        p.y = 300;
 
-        params.gravity = Gravity.TOP | Gravity.END;
-        params.x = 25;
-        params.y = 350;
-
-        boton.setOnClickListener(v -> {
-            long ahora = System.currentTimeMillis();
-
-            if (ejecutando ||
-                    ahora - ultimoInicio < COOLDOWN_MS) {
-                return;
-            }
-
-            ultimoInicio = ahora;
-            ejecutarMacro();
-        });
-
-        wm.addView(boton, params);
+        boton.setOnClickListener(v -> probarGesto());
+        wm.addView(boton, p);
     }
 
-    private void ejecutarMacro() {
-        if (ejecutando) return;
-
-        ejecutando = true;
-        actualizarBoton(VERDE, "...");
-
-        tocar(ABRIR_X, ABRIR_Y, ok1 -> {
-            if (!ok1) {
-                terminar("!");
-                return;
-            }
-
-            handler.postDelayed(() -> {
-                tocar(M7_X, M7_Y, ok2 -> {
-                    if (!ok2) {
-                        terminar("!");
-                        return;
-                    }
-
-                    handler.postDelayed(() -> {
-                        tocar(OBTENER_X, OBTENER_Y, ok3 -> {
-                            terminar(ok3 ? "OK" : "!");
-                        });
-                    }, ESPERA_CONFIRMAR_MS);
-
-                });
-            }, ESPERA_SELECCION_MS);
-        });
+    private GradientDrawable fondo(int color) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.RECTANGLE);
+        d.setCornerRadius(20);
+        d.setColor(color);
+        return d;
     }
 
-    private interface Resultado {
-        void completar(boolean correcto);
-    }
+    private void probarGesto() {
+        if (probando) return;
+        probando = true;
+        boton.setText("PROBANDO");
+        boton.setBackground(fondo(Color.rgb(190, 130, 0)));
 
-    private void tocar(float x, float y, Resultado resultado) {
-        final boolean[] respondido = {false};
+        android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+        wm.getDefaultDisplay().getRealMetrics(dm);
 
-        Runnable timeout = () -> {
-            if (!respondido[0]) {
-                respondido[0] = true;
-                resultado.completar(false);
-            }
-        };
+        float x = dm.widthPixels / 2f;
+        float y = dm.heightPixels / 2f;
 
-        handler.postDelayed(timeout, TIMEOUT_GESTO_MS);
+        Path path = new Path();
+        path.moveTo(x, y);
 
-        Path ruta = new Path();
-        ruta.moveTo(x, y);
-
-        GestureDescription gesto =
-                new GestureDescription.Builder()
-                        .addStroke(
-                                new GestureDescription.StrokeDescription(
-                                        ruta, 0, 100
-                                )
-                        )
-                        .build();
+        GestureDescription gesture = new GestureDescription.Builder()
+            .addStroke(new GestureDescription.StrokeDescription(path, 0, 100))
+            .build();
 
         boolean enviado = dispatchGesture(
-                gesto,
-                new GestureResultCallback() {
-                    @Override
-                    public void onCompleted(GestureDescription g) {
-                        if (!respondido[0]) {
-                            respondido[0] = true;
-                            handler.removeCallbacks(timeout);
-                            resultado.completar(true);
-                        }
-                    }
+            gesture,
+            new GestureResultCallback() {
+                @Override
+                public void onCompleted(GestureDescription g) {
+                    mostrarResultado("ACEPTADO", Color.rgb(0, 140, 0));
+                }
 
-                    @Override
-                    public void onCancelled(GestureDescription g) {
-                        if (!respondido[0]) {
-                            respondido[0] = true;
-                            handler.removeCallbacks(timeout);
-                            resultado.completar(false);
-                        }
-                    }
-                },
-                null
+                @Override
+                public void onCancelled(GestureDescription g) {
+                    mostrarResultado("CANCELADO", Color.RED);
+                }
+            },
+            null
         );
 
-        if (!enviado && !respondido[0]) {
-            respondido[0] = true;
-            handler.removeCallbacks(timeout);
-            resultado.completar(false);
+        if (!enviado) {
+            mostrarResultado("RECHAZADO", Color.RED);
         }
     }
 
-    private void terminar(String texto) {
-        ejecutando = false;
-        actualizarBoton(ROJO, texto);
+    private void mostrarResultado(String texto, int color) {
+        probando = false;
+        boton.setText(texto);
+        boton.setBackground(fondo(color));
 
         handler.postDelayed(() -> {
-            if (!ejecutando) {
-                actualizarBoton(ROJO, "GO");
+            if (boton != null && !probando) {
+                boton.setText("PROBAR");
+                boton.setBackground(fondo(Color.RED));
             }
-        }, 1000);
+        }, 2500);
     }
 
     @Override
@@ -209,14 +118,12 @@ public class AutoTapService extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
-        ejecutando = false;
-        actualizarBoton(ROJO, "GO");
+        probando = false;
     }
 
     @Override
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
-
         if (boton != null && wm != null) {
             try {
                 wm.removeView(boton);
@@ -224,7 +131,6 @@ public class AutoTapService extends AccessibilityService {
             }
             boton = null;
         }
-
         super.onDestroy();
     }
 }
