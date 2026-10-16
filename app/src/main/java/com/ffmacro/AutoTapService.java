@@ -20,38 +20,38 @@ import android.widget.TextView;
 /**
  * AutoTapService — Free Fire MAX Shop Macro
  *
- * Secuencia de 3 taps al presionar el botón flotante:
- *   TAP 1 → Botón "COMPRAR" flotante del juego (abre la tienda)
- *   TAP 2 → Primera casilla del modal (Caja de Información / ítem especial)
- *   TAP 3 → Botón "COMPRAR" del modal (esquina inferior derecha — confirma)
+ * Secuencia de 3 taps FULL AUTO — para mishero que necesita revivir rápido:
+ *   TAP 1 → Botón COMPRAR del HUD (abre la tienda)
+ *   TAP 2 → Superresurrección (sección REVIVIR, casilla izquierda)
+ *   TAP 3 → Botón COMPRAR del modal (confirma)
  *
- * Coordenadas calculadas como % de pantalla según capturas landscape de FF MAX.
- * Ajusta los valores FLOAT si tu resolución difiere.
+ * Solo presiona el botón flotante — hace todo solo.
+ * Calibrado para pantalla PORTRAIT 2412x1080.
  */
 public class AutoTapService extends AccessibilityService {
 
     // ─── Timing ───────────────────────────────────────────────────────────────
     private static final long DURACION_TAP   = 80;    // ms duración de cada tap
-    private static final long DELAY_T1_a_T2  = 800;   // ms entre tap1 y tap2 (espera que abra modal)
-    private static final long DELAY_T2_a_T3  = 500;   // ms entre tap2 (selección) y tap3 (confirmar)
+    private static final long DELAY_T1_a_T2  = 750;   // ms entre tap1 (abrir tienda) y tap2 (selección)
+    private static final long DELAY_T2_a_T3  = 300;   // ms entre tap2 (selección) y tap3 (confirmar)
     private static final long COOLDOWN       = 1200;   // ms tras completar secuencia
 
-    // ─── Coordenadas relativas — landscape Free Fire MAX ─────────────────────
+    // ─── Coordenadas — portrait 2412x1080 (calibradas de screenshots reales) ─
     //
-    // TAP 1: Botón "COMPRAR" flotante del HUD (carrito de compras, zona central-izquierda)
-    // En tus fotos está aprox. al 47% X, 55% Y
-    private static final float T1_X = 0.470f;
-    private static final float T1_Y = 0.550f;
+    // TAP 1: Botón COMPRAR del HUD (carrito, abre tienda)
+    // x=710/1080=0.657  y=415/2412=0.172
+    private static final float T1_X = 0.657f;
+    private static final float T1_Y = 0.172f;
 
-    // TAP 2: Primera casilla del panel OBJETO ESPECIAL (Caja de Información)
-    // Panel abre centrado. Casilla 1 está arriba-izquierda del panel (~19% X, 36% Y)
-    private static final float T2_X = 0.195f;
-    private static final float T2_Y = 0.360f;
+    // TAP 2: SUPERRESURRECCIÓN — sección REVIVIR, casilla izquierda
+    // x=277/1080=0.256  y=200/2412=0.083
+    private static final float T2_X = 0.256f;
+    private static final float T2_Y = 0.083f;
 
-    // TAP 3: Botón COMPRAR / confirmar — esquina inferior derecha del modal
-    // En tus fotos el botón "COMPRAR" está ~62% X, 90% Y
-    private static final float T3_X = 0.620f;
-    private static final float T3_Y = 0.895f;
+    // TAP 3: Botón COMPRAR del modal — esquina inferior derecha
+    // x=905/1080=0.838  y=597/2412=0.248
+    private static final float T3_X = 0.838f;
+    private static final float T3_Y = 0.248f;
 
     // ─── Estado ───────────────────────────────────────────────────────────────
     private WindowManager wm;
@@ -59,8 +59,6 @@ public class AutoTapService extends AccessibilityService {
     private TextView btnLabel;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean ejecutando = false;
-
-    // Arrastre del botón flotante
     private int baseX, baseY;
     private float rawX0, rawY0;
 
@@ -146,7 +144,7 @@ public class AutoTapService extends AccessibilityService {
         wm.addView(overlayRoot, lp);
     }
 
-    // ─── Secuencia de 3 taps ──────────────────────────────────────────────────
+    // ─── Secuencia de 3 taps FULL AUTO ───────────────────────────────────────
     private void ejecutarSecuencia() {
         if (ejecutando) return;
         ejecutando = true;
@@ -162,16 +160,16 @@ public class AutoTapService extends AccessibilityService {
         final float W = dm.widthPixels;
         final float H = dm.heightPixels;
 
-        // TAP 1 — Botón COMPRAR flotante (abre tienda)
+        // TAP 1 — Abre tienda (botón COMPRAR del HUD)
         tap(W * T1_X, H * T1_Y, () -> {
             setUI("⏳ 2/3", Color.parseColor("#CCEF6C00"));
 
-            // TAP 2 — Casilla 1 (Caja de Información)
+            // TAP 2 — Superresurrección (espera que cargue el modal)
             handler.postDelayed(() ->
                 tap(W * T2_X, H * T2_Y, () -> {
                     setUI("⏳ 3/3", Color.parseColor("#CC43A047"));
 
-                    // TAP 3 — Botón COMPRAR del modal (confirmar)
+                    // TAP 3 — COMPRAR confirmar
                     handler.postDelayed(() ->
                         tap(W * T3_X, H * T3_Y, () -> {
                             setUI("✅ LISTO", Color.parseColor("#CC43A047"));
