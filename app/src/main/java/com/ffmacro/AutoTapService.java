@@ -7,22 +7,20 @@ import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.ImageButton;
 import java.util.Random;
 
 public class AutoTapService extends AccessibilityService {
 
-    private static final float ABRIR_X   = 718f;
-    private static final float ABRIR_Y   = 370f;
-    private static final float M7_X      = 255f;
-    private static final float M7_Y      = 255f;
-    private static final float OBTENER_X = 968f;
-    private static final float OBTENER_Y = 581f;
+    private static final float ABRIR_X   = 1120f;
+    private static final float ABRIR_Y   = 541f;
+    private static final float M7_X      = 402f;
+    private static final float M7_Y      = 399f;
+    private static final float OBTENER_X = 1467f;
+    private static final float OBTENER_Y = 892f;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random rng = new Random();
@@ -40,7 +38,6 @@ public class AutoTapService extends AccessibilityService {
 
     private void showOverlayButton() {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-
         overlayView = new View(this);
         overlayView.setBackgroundColor(0xCCFFD700);
 
@@ -61,11 +58,9 @@ public class AutoTapService extends AccessibilityService {
             runMacro();
         });
 
-        // Drag support
         overlayView.setOnTouchListener(new View.OnTouchListener() {
             int lastX, lastY, initX, initY;
             boolean isDrag;
-
             @Override
             public boolean onTouch(View v, MotionEvent e) {
                 switch (e.getAction()) {
@@ -120,4 +115,4 @@ public class AutoTapService extends AccessibilityService {
 
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {}
     @Override public void onInterrupt() {}
-            }
+}
