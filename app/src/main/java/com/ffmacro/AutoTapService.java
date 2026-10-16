@@ -3,15 +3,20 @@ package com.ffmacro;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
+import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.KeyEvent;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.ImageButton;
 import java.util.Random;
 
 public class AutoTapService extends AccessibilityService {
 
-    // Coordenadas base
     private static final float ABRIR_X   = 718f;
     private static final float ABRIR_Y   = 370f;
     private static final float M7_X      = 255f;
@@ -21,57 +26,98 @@ public class AutoTapService extends AccessibilityService {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random rng = new Random();
-
-    // Anti-cheat: evita spam de vol+ repetido
     private long lastMacroTime = 0;
     private static final long COOLDOWN_MS = 800;
 
+    private WindowManager wm;
+    private View overlayView;
+
     @Override
-    protected boolean onKeyEvent(KeyEvent event) {
-        if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP
-                && event.getAction() == KeyEvent.ACTION_DOWN) {
+    public void onServiceConnected() {
+        super.onServiceConnected();
+        showOverlayButton();
+    }
 
+    private void showOverlayButton() {
+        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+        overlayView = new View(this);
+        overlayView.setBackgroundColor(0xCCFFD700);
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+            80, 80,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        );
+        params.gravity = Gravity.TOP | Gravity.END;
+        params.x = 10;
+        params.y = 300;
+
+        overlayView.setOnClickListener(v -> {
             long now = System.currentTimeMillis();
-            if (now - lastMacroTime < COOLDOWN_MS) return true; // ignora si muy rápido
+            if (now - lastMacroTime < COOLDOWN_MS) return;
             lastMacroTime = now;
-
             runMacro();
-            return true;
-        }
-        return super.onKeyEvent(event);
+        });
+
+        // Drag support
+        overlayView.setOnTouchListener(new View.OnTouchListener() {
+            int lastX, lastY, initX, initY;
+            boolean isDrag;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent e) {
+                switch (e.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        lastX = (int) e.getRawX();
+                        lastY = (int) e.getRawY();
+                        initX = params.x;
+                        initY = params.y;
+                        isDrag = false;
+                        return false;
+                    case MotionEvent.ACTION_MOVE:
+                        int dx = (int) e.getRawX() - lastX;
+                        int dy = (int) e.getRawY() - lastY;
+                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDrag = true;
+                        if (isDrag) {
+                            params.x = initX - dx;
+                            params.y = initY + dy;
+                            wm.updateViewLayout(overlayView, params);
+                        }
+                        return isDrag;
+                    default:
+                        return false;
+                }
+            }
+        });
+
+        wm.addView(overlayView, params);
     }
 
     private void runMacro() {
-        // TAP 1 — ABRIR (inmediato + micro offset aleatorio)
         tap(ABRIR_X, ABRIR_Y);
-
-        // TAP 2 — M7 (delay humano aleatorio entre 70-110ms)
-        long delay2 = 70 + rng.nextInt(40);
-        handler.postDelayed(() -> tap(M7_X, M7_Y), delay2);
-
-        // TAP 3 — OBTENER (delay humano aleatorio entre 140-200ms)
-        long delay3 = 140 + rng.nextInt(60);
-        handler.postDelayed(() -> tap(OBTENER_X, OBTENER_Y), delay3);
+        handler.postDelayed(() -> tap(M7_X, M7_Y), 70 + rng.nextInt(40));
+        handler.postDelayed(() -> tap(OBTENER_X, OBTENER_Y), 150 + rng.nextInt(60));
     }
 
     private void tap(float baseX, float baseY) {
-        // Micro offset aleatorio ±3px — imita dedo humano impreciso
         float x = baseX + (rng.nextFloat() * 6f) - 3f;
         float y = baseY + (rng.nextFloat() * 6f) - 3f;
-
-        // Duración del tap aleatoria entre 45-75ms
-        int duration = 45 + rng.nextInt(30);
-
         Path path = new Path();
         path.moveTo(x, y);
-
-        GestureDescription gesture = new GestureDescription.Builder()
-            .addStroke(new GestureDescription.StrokeDescription(path, 0, duration))
+        GestureDescription g = new GestureDescription.Builder()
+            .addStroke(new GestureDescription.StrokeDescription(path, 0, 45 + rng.nextInt(30)))
             .build();
+        dispatchGesture(g, null, null);
+    }
 
-        dispatchGesture(gesture, null, null);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (overlayView != null) wm.removeView(overlayView);
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {}
     @Override public void onInterrupt() {}
-}
+            }
