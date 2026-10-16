@@ -152,6 +152,11 @@ public class AutoTapService extends AccessibilityService {
         ejecutando = true;
         setUI("⏳ 1/3", Color.parseColor("#CCEF6C00"));
 
+        // Timeout de seguridad: si en 4s no terminó, resetea solo
+        handler.postDelayed(() -> {
+            if (ejecutando) resetUI();
+        }, 4000);
+
         DisplayMetrics dm = new DisplayMetrics();
         wm.getDefaultDisplay().getRealMetrics(dm);
         final float W = dm.widthPixels;
