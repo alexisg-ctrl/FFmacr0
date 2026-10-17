@@ -2,6 +2,8 @@ package com.ffmacro;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
@@ -163,18 +165,27 @@ public class AutoTapService extends AccessibilityService {
         final float W = dm.widthPixels;
         final float H = dm.heightPixels;
 
+        // Leer coords desde prefs (calibradas) o usar defaults hardcodeados
+        SharedPreferences p = getSharedPreferences(CalibrarActivity.PREFS, Context.MODE_PRIVATE);
+        final float t1x = p.getFloat(CalibrarActivity.K_T1X, T1_X);
+        final float t1y = p.getFloat(CalibrarActivity.K_T1Y, T1_Y);
+        final float t2x = p.getFloat(CalibrarActivity.K_T2X, T2_X);
+        final float t2y = p.getFloat(CalibrarActivity.K_T2Y, T2_Y);
+        final float t3x = p.getFloat(CalibrarActivity.K_T3X, T3_X);
+        final float t3y = p.getFloat(CalibrarActivity.K_T3Y, T3_Y);
+
         // TAP 1 — Abre tienda (botón COMPRAR del HUD)
-        tap(W * T1_X, H * T1_Y, () -> {
+        tap(W * t1x, H * t1y, () -> {
             setUI("⏳ 2/3", Color.parseColor("#CCEF6C00"));
 
             // TAP 2 — Superresurrección (espera que cargue el modal)
             handler.postDelayed(() ->
-                tap(W * T2_X, H * T2_Y, () -> {
+                tap(W * t2x, H * t2y, () -> {
                     setUI("⏳ 3/3", Color.parseColor("#CC43A047"));
 
                     // TAP 3 — COMPRAR confirmar
                     handler.postDelayed(() ->
-                        tap(W * T3_X, H * T3_Y, () -> {
+                        tap(W * t3x, H * t3y, () -> {
                             setUI("✅ LISTO", Color.parseColor("#CC43A047"));
                             handler.postDelayed(this::resetUI, COOLDOWN);
                         }),
