@@ -36,22 +36,25 @@ public class AutoTapService extends AccessibilityService {
     private static final long DELAY_T2_a_T3  = 300;   // ms entre tap2 (selección) y tap3 (confirmar)
     private static final long COOLDOWN       = 1200;   // ms tras completar secuencia
 
-    // ─── Coordenadas — portrait 2412x1080 (calibradas de screenshots reales) ─
+    // ─── Coordenadas — portrait 2412x1080 (medidas de screenshots reales del Chief) ─
     //
-    // TAP 1: Botón COMPRAR del HUD (carrito, abre tienda)
-    // x=710/1080=0.657  y=415/2412=0.172
-    private static final float T1_X = 0.657f;
-    private static final float T1_Y = 0.172f;
+    // TAP 1: Botón COMPRAR del HUD (carrito 🛒) — screenshot1
+    // display: x=710/1556=0.456  y=370/2796=0.132
+    // device:  x=493/1080        y=318/2412
+    private static final float T1_X = 0.456f;
+    private static final float T1_Y = 0.132f;
 
-    // TAP 2: SUPERRESURRECCIÓN — sección REVIVIR, casilla izquierda
-    // x=277/1080=0.256  y=200/2412=0.083
-    private static final float T2_X = 0.256f;
-    private static final float T2_Y = 0.083f;
+    // TAP 2: SUPERRESURRECCIÓN — casilla top-left sección REVIVIR — screenshot2
+    // display: x=275/1556=0.177  y=205/2796=0.073
+    // device:  x=191/1080        y=176/2412
+    private static final float T2_X = 0.177f;
+    private static final float T2_Y = 0.073f;
 
-    // TAP 3: Botón COMPRAR del modal — esquina inferior derecha
-    // x=905/1080=0.838  y=597/2412=0.248
-    private static final float T3_X = 0.838f;
-    private static final float T3_Y = 0.248f;
+    // TAP 3: Botón COMPRAR amarillo — bottom-right del modal — screenshot3
+    // display: x=905/1556=0.582  y=598/2796=0.214
+    // device:  x=629/1080        y=516/2412
+    private static final float T3_X = 0.582f;
+    private static final float T3_Y = 0.214f;
 
     // ─── Estado ───────────────────────────────────────────────────────────────
     private WindowManager wm;
