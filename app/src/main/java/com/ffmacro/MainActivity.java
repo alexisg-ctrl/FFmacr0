@@ -6,6 +6,7 @@ import android.provider.Settings;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.SharedPreferences;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -19,6 +20,11 @@ public class MainActivity extends AppCompatActivity {
         Button btn = findViewById(R.id.btnEnable);
         btn.setOnClickListener(v ->
             startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        );
+
+        Button btnCalibrar = findViewById(R.id.btnCalibrar);
+        btnCalibrar.setOnClickListener(v ->
+            startActivity(new Intent(this, CalibrarActivity.class))
         );
     }
 
