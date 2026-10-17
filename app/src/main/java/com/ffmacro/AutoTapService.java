@@ -18,6 +18,7 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * AutoTapService — Free Fire MAX Shop Macro
@@ -208,17 +209,25 @@ public class AutoTapService extends AccessibilityService {
             .addStroke(new GestureDescription.StrokeDescription(p, 0, DURACION_TAP))
             .build();
 
-        dispatchGesture(g, new GestureResultCallback() {
+        boolean sent = dispatchGesture(g, new GestureResultCallback() {
             @Override
             public void onCompleted(GestureDescription gd) {
                 if (onDone != null) handler.post(onDone);
             }
             @Override
             public void onCancelled(GestureDescription gd) {
-                setUI("❌ ERROR", Color.parseColor("#CCDD2C00"));
+                setUI("❌ CANCEL", Color.parseColor("#CCDD2C00"));
+                handler.post(() -> Toast.makeText(AutoTapService.this, "Gesto CANCELADO por el sistema", Toast.LENGTH_SHORT).show());
                 handler.postDelayed(AutoTapService.this::resetUI, 1500);
             }
         }, null);
+
+        if (!sent) {
+            handler.post(() -> Toast.makeText(AutoTapService.this,
+                "ERROR: dispatchGesture=false — reactiva el servicio", Toast.LENGTH_LONG).show());
+            setUI("❌ NO PERM", Color.parseColor("#CCDD2C00"));
+            handler.postDelayed(this::resetUI, 2000);
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
