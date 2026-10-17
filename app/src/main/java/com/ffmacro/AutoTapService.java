@@ -196,38 +196,35 @@ public class AutoTapService extends AccessibilityService {
         });
     }
 
-    // ─── Tap con callback ─────────────────────────────────────────────────────
+    // ─── Tap sin depender del callback (más confiable) ────────────────────────
     private void tap(float x, float y, Runnable onDone) {
         // Offset aleatorio ±3px (anti-detección)
         float rx = x + (float)(Math.random() * 6 - 3);
         float ry = y + (float)(Math.random() * 6 - 3);
 
+        // Path con lineTo mínimo — algunos Android rechazan path de 1 solo punto
         Path p = new Path();
         p.moveTo(rx, ry);
+        p.lineTo(rx + 1, ry + 1);
 
         GestureDescription g = new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(p, 0, DURACION_TAP))
             .build();
 
-        boolean sent = dispatchGesture(g, new GestureResultCallback() {
-            @Override
-            public void onCompleted(GestureDescription gd) {
-                if (onDone != null) handler.post(onDone);
-            }
-            @Override
-            public void onCancelled(GestureDescription gd) {
-                setUI("❌ CANCEL", Color.parseColor("#CCDD2C00"));
-                handler.post(() -> Toast.makeText(AutoTapService.this, "Gesto CANCELADO por el sistema", Toast.LENGTH_SHORT).show());
-                handler.postDelayed(AutoTapService.this::resetUI, 1500);
-            }
-        }, null);
+        boolean sent = dispatchGesture(g, null, null);
 
         if (!sent) {
             handler.post(() -> Toast.makeText(AutoTapService.this,
-                "ERROR: dispatchGesture=false — reactiva el servicio", Toast.LENGTH_LONG).show());
+                "NO PERM — desactiva y reactiva el servicio", Toast.LENGTH_LONG).show());
             setUI("❌ NO PERM", Color.parseColor("#CCDD2C00"));
             handler.postDelayed(this::resetUI, 2000);
+            return;
         }
+
+        // Callback fijo — no depende de onCompleted que a veces no llega
+        handler.postDelayed(() -> {
+            if (onDone != null) onDone.run();
+        }, DURACION_TAP + 50);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
