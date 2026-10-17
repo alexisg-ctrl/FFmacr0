@@ -17,6 +17,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".CalibrarActivity"
+            android:exported="false"
+            android:label="Calibrar Coordenadas"/>
+
         <service
             android:name=".AutoTapService"
             android:exported="true"
